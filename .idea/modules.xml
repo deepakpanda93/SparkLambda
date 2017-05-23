@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/lambda-spark.iml" filepath="$PROJECT_DIR$/lambda-spark.iml" />
+      <module fileurl="file://$PROJECT_DIR$/sparklambda/sparklambda.iml" filepath="$PROJECT_DIR$/sparklambda/sparklambda.iml" />
+    </modules>
+  </component>
+</project>
