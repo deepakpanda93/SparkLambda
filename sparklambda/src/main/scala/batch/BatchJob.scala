@@ -24,7 +24,7 @@ object BatchJob {
     import org.apache.spark.sql.functions._
     import sqlContext.implicits._
 
-    val sourceFile = "file:///F:/Pramod/Boxes/spark-kafka-cassandra-applying-lambda-architecture/vagrant/data.tsv"
+    val sourceFile = "file:///vagrant/data.tsv"
     val input = sc.textFile(sourceFile)
 
     val inputDF = input.flatMap{ line =>
@@ -35,8 +35,6 @@ object BatchJob {
       else
         None
     }.toDF()
-
-    sqlContext.udf.register("UnderExposed", (pageViewCount: Long, purchaseCount: Long) => if (purchaseCount == 0) 0 else pageViewCount / purchaseCount)
 
     val df = inputDF.select(
       add_months(from_unixtime(inputDF("timestamp_hour") / 1000), 1).as("timestamp_hour"),
@@ -61,21 +59,8 @@ object BatchJob {
         |GROUP BY product, timestamp_hour"""
         .stripMargin)
 
-    activityByProduct.registerTempTable("activityByProduct")
-
-    val underExposedProducts = sqlContext.sql(
-      """SELECT
-        |product,
-        |timestamp_hour,
-        |UnderExposed(pageview_count, purchase_count) as negative_exposure
-        |FROM activityByProduct
-        |ORDER BY negative_exposure
-        |limit 5
-      """.stripMargin)
-
     visitorsByProduct.take(5).foreach(println)
     activityByProduct.take(5).foreach(println)
-    underExposedProducts.collect().foreach(println)
 
   }
 }
