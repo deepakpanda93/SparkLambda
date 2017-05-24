@@ -9,10 +9,11 @@ import org.apache.spark.{SparkConf, SparkContext}
   * Created by Pramod on 5/24/2017.
   */
 object SparkUtils {
+  val isIDE = {
+    ManagementFactory.getRuntimeMXBean.getInputArguments.toString.contains("IntelliJ IDEA")
+  }
+
   def getSparkContext(appName: String) = {
-    val isIDE = {
-      ManagementFactory.getRuntimeMXBean.getInputArguments.toString.contains("IntelliJ IDEA")
-    }
 
     var checkpointDirectory = ""
     val conf = new SparkConf()

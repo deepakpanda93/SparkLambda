@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3da1083b-beae-43d0-9c84-a4a230030cff" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sparklambda/src/main/scala/batch/BatchJob.scala" afterPath="$PROJECT_DIR$/sparklambda/src/main/scala/batch/BatchJob.scala" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/sparklambda/src/main/scala/streaming/StreamingJob.scala" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sparklambda/src/main/scala/utils/SparkUtils.scala" afterPath="$PROJECT_DIR$/sparklambda/src/main/scala/utils/SparkUtils.scala" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/module1/target/" />
@@ -60,11 +62,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="BatchJob.scala" pinned="false" current-in-tab="true">
+      <file leaf-file-name="BatchJob.scala" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/sparklambda/src/main/scala/batch/BatchJob.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-150">
-              <caret line="14" column="20" lean-forward="false" selection-start-line="14" selection-start-column="20" selection-end-line="14" selection-end-column="20" />
+            <state relative-caret-position="475">
+              <caret line="19" column="18" lean-forward="false" selection-start-line="19" selection-start-column="8" selection-end-line="19" selection-end-column="18" />
               <folding>
                 <element signature="e#15#60#0" expanded="true" />
                 <element signature="e#418#457#0" expanded="true" />
@@ -73,11 +75,23 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="StreamingJob.scala" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/sparklambda/src/main/scala/streaming/StreamingJob.scala">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="302">
+              <caret line="24" column="14" lean-forward="false" selection-start-line="24" selection-start-column="14" selection-end-line="24" selection-end-column="14" />
+              <folding>
+                <element signature="e#19#80#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="SparkUtils.scala" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/sparklambda/src/main/scala/utils/SparkUtils.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="227">
-              <caret line="33" column="0" lean-forward="true" selection-start-line="33" selection-start-column="0" selection-end-line="33" selection-end-column="0" />
+            <state relative-caret-position="27">
+              <caret line="16" column="0" lean-forward="false" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
               <folding>
                 <element signature="e#15#60#0" expanded="true" />
               </folding>
@@ -112,8 +126,9 @@
         <option value="$PROJECT_DIR$/sparklambda/src/main/scala/clickstream/LogProducer.scala" />
         <option value="$PROJECT_DIR$/pom.xml" />
         <option value="$PROJECT_DIR$/sparklambda/src/main/scala/domain/package.scala" />
-        <option value="$PROJECT_DIR$/sparklambda/src/main/scala/utils/SparkUtils.scala" />
         <option value="$PROJECT_DIR$/sparklambda/src/main/scala/batch/BatchJob.scala" />
+        <option value="$PROJECT_DIR$/sparklambda/src/main/scala/utils/SparkUtils.scala" />
+        <option value="$PROJECT_DIR$/sparklambda/src/main/scala/streaming/StreamingJob.scala" />
       </list>
     </option>
   </component>
@@ -967,8 +982,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/sparklambda/src/main/scala/utils/SparkUtils.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="227">
-          <caret line="33" column="0" lean-forward="true" selection-start-line="33" selection-start-column="0" selection-end-line="33" selection-end-column="0" />
+        <state relative-caret-position="27">
+          <caret line="16" column="0" lean-forward="false" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
           <folding>
             <element signature="e#15#60#0" expanded="true" />
           </folding>
@@ -977,11 +992,21 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/sparklambda/src/main/scala/batch/BatchJob.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-150">
-          <caret line="14" column="20" lean-forward="false" selection-start-line="14" selection-start-column="20" selection-end-line="14" selection-end-column="20" />
+        <state relative-caret-position="475">
+          <caret line="19" column="18" lean-forward="false" selection-start-line="19" selection-start-column="8" selection-end-line="19" selection-end-column="18" />
           <folding>
             <element signature="e#15#60#0" expanded="true" />
             <element signature="e#418#457#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sparklambda/src/main/scala/streaming/StreamingJob.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="302">
+          <caret line="24" column="14" lean-forward="false" selection-start-line="24" selection-start-column="14" selection-end-line="24" selection-end-column="14" />
+          <folding>
+            <element signature="e#19#80#0" expanded="true" />
           </folding>
         </state>
       </provider>
