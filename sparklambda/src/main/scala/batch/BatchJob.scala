@@ -3,6 +3,7 @@ package batch
 import java.lang.management.ManagementFactory
 
 import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.SQLContext
 import domain._
 /**
   * Created by Pramod on 5/23/2017.
@@ -18,40 +19,63 @@ object BatchJob {
     }
 
     val sc = new SparkContext(conf)
+    implicit val sqlContext = new SQLContext(sc)
+
+    import org.apache.spark.sql.functions._
+    import sqlContext.implicits._
 
     val sourceFile = "file:///F:/Pramod/Boxes/spark-kafka-cassandra-applying-lambda-architecture/vagrant/data.tsv"
     val input = sc.textFile(sourceFile)
 
-    val inputRDD = input.flatMap{ line =>
+    val inputDF = input.flatMap{ line =>
       val record = line.split("\\t")
       val MS_IN_HOUR = 1000 * 60 * 60
       if (record.length == 7)
         Some(Activity(record(0).toLong, record(1), record(2), record(3), record(4), record(5), record(6)))
       else
         None
-    }
+    }.toDF()
 
-    // Keyby creates a pair Rdd from an RDD while the key is what is provided and the value is the original value
-    // keyedByProduct is of type ((product, timestamp), Activity)
-    val keyedByProduct = inputRDD.keyBy( a => (a.product, a.timestamp_hour)).cache()
+    sqlContext.udf.register("UnderExposed", (pageViewCount: Long, purchaseCount: Long) => if (purchaseCount == 0) 0 else pageViewCount / purchaseCount)
 
-    // Visitors per product
+    val df = inputDF.select(
+      add_months(from_unixtime(inputDF("timestamp_hour") / 1000), 1).as("timestamp_hour"),
+      inputDF("referrer"), inputDF("action"), inputDF("prevPage"), inputDF("page"), inputDF("visitor"), inputDF("product")
+    ).cache()
 
-    val visitorsPerProduct = keyedByProduct
-      .mapValues( a => a.visitor )
-      .distinct()
-      .countByKey()
+    df.registerTempTable("activity")
 
-    val activityByProduct = keyedByProduct
-      .mapValues{ a =>
-         a.action match {
-           case "purchase" => (1, 0, 0)
-           case "add_to_cart" => (0, 1, 0)
-           case "pageview" => (0, 0, 1)
-         }
-      }
-      .reduceByKey((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
+    val visitorsByProduct = sqlContext.sql(
+      """SELECT product, timestamp_hour, COUNT(DISTINCT visitor) as unique_visitors
+        |FROM activity GROUP BY product, timestamp_hour
+      """.stripMargin)
 
-    activityByProduct.foreach(println)
+    val activityByProduct = sqlContext.sql(
+      """SELECT
+        |product,
+        |timestamp_hour,
+        |sum(case when action = 'purchase' then 1 else 0 end) as purchase_count,
+        |sum(case when action = 'add_to_cart' then 1 else 0 end) as add_to_cart_count,
+        |sum(case when action = 'pageview' then 1 else 0 end) as pageview_count
+        |FROM activity
+        |GROUP BY product, timestamp_hour"""
+        .stripMargin)
+
+    activityByProduct.registerTempTable("activityByProduct")
+
+    val underExposedProducts = sqlContext.sql(
+      """SELECT
+        |product,
+        |timestamp_hour,
+        |UnderExposed(pageview_count, purchase_count) as negative_exposure
+        |FROM activityByProduct
+        |ORDER BY negative_exposure
+        |limit 5
+      """.stripMargin)
+
+    visitorsByProduct.take(5).foreach(println)
+    activityByProduct.take(5).foreach(println)
+    underExposedProducts.collect().foreach(println)
+
   }
 }
