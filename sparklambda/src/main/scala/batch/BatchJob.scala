@@ -3,7 +3,7 @@ package batch
 import java.lang.management.ManagementFactory
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{SQLContext, SaveMode}
 import domain._
 /**
   * Created by Pramod on 5/23/2017.
@@ -57,10 +57,12 @@ object BatchJob {
         |sum(case when action = 'pageview' then 1 else 0 end) as pageview_count
         |FROM activity
         |GROUP BY product, timestamp_hour"""
-        .stripMargin)
+        .stripMargin).cache()
 
-    visitorsByProduct.take(5).foreach(println)
-    activityByProduct.take(5).foreach(println)
+    // My VM name is lambda-pluralsight
+    activityByProduct.write.partitionBy("timestamp_hour").mode(SaveMode.Append).parquet("hdfs://lambda-pluralsight:9000/lambda/batch")
 
+    visitorsByProduct.foreach(println)
+    activityByProduct.foreach(println)
   }
 }
