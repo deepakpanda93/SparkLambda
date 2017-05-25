@@ -3,7 +3,7 @@ package utils
 import java.lang.management.ManagementFactory
 
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.streaming.Duration
+import org.apache.spark.streaming.{Duration, StreamingContext}
 import org.apache.spark.{SparkConf, SparkContext}
 
 /**
@@ -39,7 +39,15 @@ object SparkUtils {
     sqlContext
   }
 
-  def getStreamingContext(sc: SparkContext, batchDuration: Duration) = {
-
+  def getStreamingContext(streamingApp: (SparkContext, Duration) => StreamingContext, sc: SparkContext, batchDuration: Duration) = {
+    val creatingFunc = () => streamingApp(sc, batchDuration)
+    val ssc = sc.getCheckpointDir match {
+        // So if there is some checkpoint dir, then get the streaming context from the checkpoint. If the checkpoint is invalidated, then provide a function to
+        // Create the streaming context
+      case Some(checkPointDir) => StreamingContext.getActiveOrCreate(checkPointDir, creatingFunc, sc.hadoopConfiguration, true)
+      case None => StreamingContext.getActiveOrCreate(creatingFunc)
+    }
+    sc.getCheckpointDir.foreach( cp => ssc.checkpoint(cp))
+    ssc
   }
 }
