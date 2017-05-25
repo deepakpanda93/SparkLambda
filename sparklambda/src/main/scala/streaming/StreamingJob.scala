@@ -1,6 +1,8 @@
 package streaming
 
+import domain.{Activity, ActivityByProduct}
 import org.apache.spark.SparkContext
+import org.apache.spark.sql.functions.{add_months, from_unixtime}
 import org.apache.spark.streaming.{Duration, Seconds, StreamingContext}
 import utils._
 /**
@@ -9,6 +11,8 @@ import utils._
 object StreamingJob {
   def main(args: Array[String]) : Unit = {
     val sc = SparkUtils.getSparkContext("SparkStreamingLambda")
+    val sqlContext = SparkUtils.getSQLContext(sc)
+    import sqlContext.implicits._
 
     val batchDuration = Seconds(2)
 
@@ -21,7 +25,35 @@ object StreamingJob {
       }
 
       val textDStream = ssc.textFileStream(inputPath)
-      textDStream.print()
+      val activityStream = textDStream.transform( input => {
+        input.flatMap{ line =>
+          val record = line.split("\\t")
+          val MS_IN_HOUR = 1000 * 60 * 60
+          if (record.length == 7)
+            Some(Activity(record(0).toLong, record(1), record(2), record(3), record(4), record(5), record(6)))
+          else
+            None
+        }
+      } )
+
+      activityStream.transform( rdd => {
+        val df = rdd.toDF()
+        df.registerTempTable("activity")
+        val activityByProduct = sqlContext.sql(
+          """SELECT
+            |product,
+            |timestamp_hour,
+            |sum(case when action = 'purchase' then 1 else 0 end) as purchase_count,
+            |sum(case when action = 'add_to_cart' then 1 else 0 end) as add_to_cart_count,
+            |sum(case when action = 'pageview' then 1 else 0 end) as pageview_count
+            |FROM activity
+            |GROUP BY product, timestamp_hour"""
+            .stripMargin)
+        activityByProduct
+          .map{ r => ((r.getString(0), r.getString(1)),
+            ActivityByProduct(r.getString(0), r.getLong(1), r.getLong(2), r.getLong(3), r.getLong(4))
+          ) }
+      })
 
       ssc
     }
