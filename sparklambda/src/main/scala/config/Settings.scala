@@ -16,6 +16,8 @@ object Settings {
     lazy val pages = weblogGen.getInt("pages")
     lazy val visitors = weblogGen.getInt("visitors")
     lazy val filePath = weblogGen.getString("file_path")
+    lazy val destinationPath = weblogGen.getString("destination_path")
+    lazy val numFiles = weblogGen.getInt("number_of_files")
   }
 
 
