@@ -3,6 +3,7 @@ package utils
 import java.lang.management.ManagementFactory
 
 import org.apache.spark.sql.SQLContext
+import org.apache.spark.streaming.Duration
 import org.apache.spark.{SparkConf, SparkContext}
 
 /**
@@ -36,5 +37,9 @@ object SparkUtils {
   def getSQLContext(sc: SparkContext) = {
     val sqlContext = SQLContext.getOrCreate(sc)
     sqlContext
+  }
+
+  def getStreamingContext(sc: SparkContext, batchDuration: Duration) = {
+
   }
 }
