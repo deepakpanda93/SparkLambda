@@ -18,6 +18,7 @@ object Settings {
     lazy val filePath = weblogGen.getString("file_path")
     lazy val destinationPath = weblogGen.getString("destination_path")
     lazy val numFiles = weblogGen.getInt("number_of_files")
+    lazy val kafkaTopic = weblogGen.getString("kafka_topic")
   }
 
 
