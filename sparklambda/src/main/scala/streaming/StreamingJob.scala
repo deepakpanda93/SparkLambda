@@ -1,5 +1,6 @@
 package streaming
 
+import akka.actor.FSM.CurrentState
 import domain.{Activity, ActivityByProduct}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions.{add_months, from_unixtime}
@@ -36,7 +37,7 @@ object StreamingJob {
         }
       } )
 
-      activityStream.transform( rdd => {
+      val statefulActivityByProduct = activityStream.transform( rdd => {
         val df = rdd.toDF()
         df.registerTempTable("activity")
         val activityByProduct = sqlContext.sql(
@@ -49,15 +50,26 @@ object StreamingJob {
             |FROM activity
             |GROUP BY product, timestamp_hour"""
             .stripMargin)
+
         activityByProduct
           .map{ r => ((r.getString(0), r.getString(1)),
             ActivityByProduct(r.getString(0), r.getLong(1), r.getLong(2), r.getLong(3), r.getLong(4))
           ) }
+      }).updateStateByKey( (newItemsPerKey: Seq[ActivityByProduct], currentState: Option[(Long, Long, Long)]) => {
+        var (purchase_count, add_to_cart_count, page_view_count) = currentState.getOrElse((0L, 0L, 0L))
+
+        newItemsPerKey.foreach( a => {
+          purchase_count += a.purchase_count
+          add_to_cart_count += a.add_to_cart_count
+          page_view_count += a.page_view_count
+        })
+
+        Some((purchase_count, add_to_cart_count, page_view_count))
       })
 
+      statefulActivityByProduct.print(10)
       ssc
     }
-
     val ssc = SparkUtils.getStreamingContext(streamingApp, sc, batchDuration)
     ssc.start()
     ssc.awaitTermination()
