@@ -55,16 +55,27 @@ object StreamingJob {
           .map{ r => ((r.getString(0), r.getString(1)),
             ActivityByProduct(r.getString(0), r.getLong(1), r.getLong(2), r.getLong(3), r.getLong(4))
           ) }
-      }).updateStateByKey( (newItemsPerKey: Seq[ActivityByProduct], currentState: Option[(Long, Long, Long)]) => {
-        var (purchase_count, add_to_cart_count, page_view_count) = currentState.getOrElse((0L, 0L, 0L))
+      }).updateStateByKey( (newItemsPerKey: Seq[ActivityByProduct], currentState: Option[(Long, Long, Long, Long)]) => {
+        var (previous_timestamp, purchase_count, add_to_cart_count, page_view_count) = currentState.getOrElse((0L, 0L, 0L, 0L))
+        var result: Option[(Long, Long, Long, Long)] = null
 
-        newItemsPerKey.foreach( a => {
-          purchase_count += a.purchase_count
-          add_to_cart_count += a.add_to_cart_count
-          page_view_count += a.page_view_count
-        })
+        // Invalidating the state by deleting keys that have not been seen in some time
+        if (newItemsPerKey.isEmpty) {
+          if(System.currentTimeMillis() - previous_timestamp > 30000 + 2000)
+            result = None
+          else
+            result = Some(previous_timestamp, purchase_count, add_to_cart_count, page_view_count)
+        } else {
+          newItemsPerKey.foreach( a => {
+            purchase_count += a.purchase_count
+            add_to_cart_count += a.add_to_cart_count
+            page_view_count += a.page_view_count
+          })
 
-        Some((purchase_count, add_to_cart_count, page_view_count))
+          result = Some((System.currentTimeMillis(), purchase_count, add_to_cart_count, page_view_count))
+        }
+
+        result
       })
 
       statefulActivityByProduct.print(10)
