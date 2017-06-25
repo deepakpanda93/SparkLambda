@@ -22,13 +22,15 @@ object LogProducer extends App {
 
   val rnd = new Random()
 
-  val topic = wlc.kafkaTopic
+  val topic = "weblogs-text"
   val props = new Properties()
 
+  // Setting the properties from the Producer Config static variables
   props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
   props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
   props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
   props.put(ProducerConfig.ACKS_CONFIG, "all")
+  // Will help us to debug the logs
   props.put(ProducerConfig.CLIENT_ID_CONFIG, "WebLogProducer")
 
   val kafkaProducer: Producer[Nothing, String] = new KafkaProducer[Nothing, String](props)

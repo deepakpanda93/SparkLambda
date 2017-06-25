@@ -1,3 +1,4 @@
+import com.twitter.algebird.{HLL, HyperLogLogMonoid}
 import domain.ActivityByProduct
 import org.apache.spark.streaming.State
 
@@ -25,5 +26,16 @@ package object functions {
     }
 
     underExposed
+  }
+
+  def mapVisitorsStateFunc = (k: (String, Long), v: Option[HLL], state: State[HLL]) => {
+    val currentVisitorHLL = state.getOption().getOrElse(new HyperLogLogMonoid(12).zero)
+    val newVisitorHLL = v match {
+      case Some(visitorHLL) => currentVisitorHLL + visitorHLL
+      case None => currentVisitorHLL
+    }
+    state.update(newVisitorHLL)
+    val output = newVisitorHLL.approximateSize.estimate
+    output
   }
 }

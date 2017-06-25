@@ -1,12 +1,12 @@
 package streaming
 
 import akka.actor.FSM.CurrentState
-import domain.{Activity, ActivityByProduct}
+import domain.{Activity, ActivityByProduct, VisitorsByProduct}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions.{add_months, from_unixtime}
 import org.apache.spark.streaming._
 import utils._
-import com.twitter.algebird.HyperLogLogMonoid
+import com.twitter.algebird.{HyperLogLog, HyperLogLogMonoid}
 import functions._
 /**
   * Created by Pramod on 5/24/2017.
@@ -40,10 +40,10 @@ object StreamingJob {
           else
             None
         }
-      } )
+      } ).cache()
 
 
-      val activityStateSpec = StateSpec.function(mapActivityStateFunc).timeout(Seconds(30))
+      val activityStateSpec = StateSpec.function(mapActivityStateFunc).timeout(Minutes(120))
 
       val statefulActivityByProduct = activityStream.transform( rdd => {
         val df = rdd.toDF()
@@ -66,6 +66,39 @@ object StreamingJob {
       }).mapWithState(activityStateSpec)
 
       // Unique Visitors by product
+
+      val visitorStateSpec =
+        StateSpec
+        .function(functions.mapVisitorsStateFunc)
+        .timeout(Minutes(120))
+
+      val hll = new HyperLogLogMonoid(12)
+      val statefulVisitorsByProduct = activityStream.map( a => {
+        ((a.product, a.timestamp_hour), hll(a.visitor.getBytes))
+      }).mapWithState(visitorStateSpec)
+
+      val activityStateSnapShot = statefulActivityByProduct.stateSnapshots()
+      activityStateSnapShot
+        .reduceByKeyAndWindow(
+          (a, b) => b,
+          (x, y) => x,
+          Seconds(30 / 4 * 4)
+        )
+        .foreachRDD(rdd => rdd.map(sr => ActivityByProduct(sr._1._1, sr._1._2, sr._2._1, sr._2._2, sr._2._3))
+          .toDF().registerTempTable("ActivityByProduct"))
+
+      val visitorStateSnapShot = statefulVisitorsByProduct.stateSnapshots()
+      visitorStateSnapShot
+        .reduceByKeyAndWindow(
+          (a, b) => b,
+          (x, y) => x,
+          Seconds(30 / 4 * 4)
+        )
+        .foreachRDD(rdd => rdd.map(
+        sr => VisitorsByProduct(sr._1._1, sr._1._2, sr._2.approximateSize.estimate))
+          .toDF().registerTempTable("VisitorsByProduct")
+      )
+
 
         /*.updateStateByKey((newItemsPerKey: Seq[ActivityByProduct], currentState: Option[(Long, Long, Long, Long)]) => {
         // Checking whether the state contains data for the key, if not then setting it to a default 0
@@ -97,7 +130,6 @@ object StreamingJob {
 
       })*/
 
-      statefulActivityByProduct.print(10)
       ssc
     }
     val ssc = SparkUtils.getStreamingContext(streamingApp, sc, batchDuration)
